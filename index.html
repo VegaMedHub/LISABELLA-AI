@@ -843,7 +843,7 @@
                 addMessage('bot', `
                     <span class="status-badge status-rejected">❌ Pregunta Rechazada</span><br>
                     <strong>Razón:</strong> ${classification.reason}<br><br>
-                   ${classification.suggestion ? `<em>${classification.suggestion}</em>` : ''}
+                    ${classification.suggestion ? `<em>${classification.suggestion}</em>` : ''}
                 `);
                 sendBtn.disabled = false;
                 btnText.textContent = 'Enviar';
