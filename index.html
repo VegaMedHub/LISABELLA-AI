@@ -567,10 +567,6 @@
     </footer>
 
     <script>
-        // CONFIGURACIÓN
-        const API_KEY = 'qIfrdsYSDdUKDgA7sTSdNybxnMxRhnsY';
-        const MISTRAL_MODEL = 'mistral-small-latest';
-
         // DATOS: Dominios y términos prohibidos
         const DOMAINS = {
             keywords: {
@@ -753,75 +749,40 @@
             };
         }
 
-        function buildSystemPrompt(domain, specialCommand) {
-            if (specialCommand === "revision_nota") {
-                return `Eres un auditor médico certificado especializado en revisión de notas médicas según estándares JCI, Clínica Mayo y COFEPRIS. Evalúa: datos del paciente, motivo de consulta, padecimiento actual, antecedentes, exploración física, impresión diagnóstica, plan de manejo, y aspectos legales. Proporciona un análisis detallado de componentes presentes, faltantes, errores detectados, cumplimiento legal y recomendaciones.`;
-            }
-
-            if (specialCommand === "correccion_nota") {
-                return `Eres un corrector especializado de notas médicas. Tu función es identificar y corregir errores de formato, ortografía médica, dosis, abreviaturas no estándar, y claridad. Señala errores específicos con ubicación exacta y proporciona versión corregida.`;
-            }
-
-            if (specialCommand === "elaboracion_nota") {
-                return `Eres un generador de plantillas de notas médicas. Crea plantillas estructuradas en formato SOAP completo con todos los campos obligatorios: datos del documento, datos del paciente, subjetivo, objetivo, análisis y plan detallado.`;
-            }
-
-            if (specialCommand === "valoracion") {
-                return `Eres un médico consultor especializado en apoyo diagnóstico. Analiza el caso clínico y proporciona: resumen del caso, hipótesis diagnósticas (probable y diferenciales con justificación), estudios sugeridos, abordaje terapéutico, signos de alarma, y criterios de derivación.`;
-            }
-
-            if (specialCommand === "study_mode") {
-                return `Eres Lisabella en modo educativo especializado en ${domain}. Enseña usando: analogías para conceptos complejos, ejemplos clínicos relevantes, explicación del "por qué" detrás de cada concepto, división en pasos simples, casos de aplicación práctica, errores comunes, correlación clínica. Objetivo: que el usuario ENTIENDA profundamente, no solo memorice.`;
-            }
-
-            return `Eres Lisabella, asistente médico especializado en ${domain}. Proporciona respuestas basadas en rigor científico verificable. Estructura: Definición, Detalles Clave, Advertencias, Fuentes. Solo información de fuentes académicas confiables como Gray's Anatomy, Harrison's Principles, UpToDate, COFEPRIS. No inventes fármacos ni estructuras.`;
-        }
-
+        // FUNCIÓN CORREGIDA: Ahora llama a tu backend en lugar de a Mistral directamente
         async function generateResponse(question, classification) {
             const domain = classification.domain || "medicina general";
             const specialCommand = classification.special_command;
 
-            const systemPrompt = buildSystemPrompt(domain, specialCommand);
-            
-            let userPrompt = question;
-            if (!specialCommand) {
-                userPrompt = `PREGUNTA MÉDICA (${domain}):\n${question}\n\nResponde siguiendo: Definición, Detalles Clave, Advertencias, Fuentes`;
-            }
-
             try {
-                const response = await fetch('https://api.mistral.ai/v1/chat/completions', {
+                console.log("📤 Enviando pregunta al backend...");
+                
+                const response = await fetch('/api/ask', {  // ← CORRECTO: Llama a tu backend
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
-                        'Authorization': `Bearer ${API_KEY}`
                     },
                     body: JSON.stringify({
-                        model: MISTRAL_MODEL,
-                        messages: [
-                            { role: "system", content: systemPrompt },
-                            { role: "user", content: userPrompt }
-                        ],
-                        temperature: 0.7,
-                        max_tokens: 4000
+                        question: question,
+                        domain: domain,
+                        special_command: specialCommand,
+                        classification: classification
                     })
                 });
 
                 if (!response.ok) {
-                    const errorData = await response.json();
-                    throw new Error(errorData.message || `API error: ${response.status}`);
+                    const errorText = await response.text();
+                    console.error('Error del backend:', errorText);
+                    throw new Error(`Error del servidor: ${response.status}`);
                 }
 
                 const data = await response.json();
-                return data.choices[0].message.content;
+                console.log("✅ Respuesta recibida del backend");
+                return data.answer || "No se pudo generar una respuesta.";
+                
             } catch (error) {
-                console.error('Error:', error);
-                if (error.message.includes('401') || error.message.includes('Unauthorized')) {
-                    return "❌ **Error de Autenticación**\n\nVerifica que la API key de Mistral sea válida y esté activada.";
-                }
-                if (error.message.includes('429') || error.message.includes('rate')) {
-                    return "⏳ **Sistema Temporalmente Saturado**\n\nIntenta nuevamente en unos segundos.";
-                }
-                return `⚠️ **Error**: ${error.message}`;
+                console.error('Error en generateResponse:', error);
+                return `⚠️ **Error de conexión**: ${error.message}\n\nPor favor, verifica que el servidor backend esté ejecutándose.`;
             }
         }
 
@@ -864,21 +825,29 @@
                 return;
             }
 
-            // Generar respuesta con Mistral
-            const response = await generateResponse(question, classification);
-            
-            const responseHtml = formatMarkdown(response);
-            
-            let statusBadge = 'status-approved';
-            if (response.includes('Error') || response.includes('❌')) {
-                statusBadge = 'status-rejected';
+            // Generar respuesta con el backend
+            try {
+                const response = await generateResponse(question, classification);
+                
+                const responseHtml = formatMarkdown(response);
+                
+                let statusBadge = 'status-approved';
+                if (response.includes('Error') || response.includes('❌')) {
+                    statusBadge = 'status-rejected';
+                }
+                
+                addMessage('bot', `
+                    <span class="status-badge ${statusBadge}">✅ Respuesta Procesada</span>
+                    ${classification.domain ? `<span style="font-size: 0.85rem; color: var(--uas-gris);">[${classification.domain}]</span>` : ''}<br><br>
+                    ${responseHtml}
+                `);
+            } catch (error) {
+                addMessage('bot', `
+                    <span class="status-badge status-rejected">❌ Error</span><br>
+                    <strong>No se pudo conectar con el servidor:</strong><br>
+                    ${error.message}
+                `);
             }
-            
-            addMessage('bot', `
-                <span class="status-badge ${statusBadge}">✅ Respuesta Procesada</span>
-                ${classification.domain ? `<span style="font-size: 0.85rem; color: var(--uas-gris);">[${classification.domain}]</span>` : ''}<br><br>
-                ${responseHtml}
-            `);
 
             sendBtn.disabled = false;
             btnText.textContent = 'Enviar';
