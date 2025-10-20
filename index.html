@@ -1,0 +1,846 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lisabella - Asistente Médico IA</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        :root {
+            --uas-azul: #003f7f;
+            --uas-dorado: #d4af37;
+            --uas-blanco: #ffffff;
+            --uas-gris: #6c757d;
+            --uas-azul-claro: #4a90e2;
+            --max-width: 1200px;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            background: linear-gradient(135deg, var(--uas-azul) 0%, var(--uas-azul-claro) 100%);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .header {
+            background: rgba(255,255,255,0.98);
+            backdrop-filter: blur(15px);
+            box-shadow: 0 4px 25px rgba(0,0,0,0.15);
+            border-bottom: 3px solid var(--uas-dorado);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+        
+        .header-container {
+            max-width: var(--max-width);
+            margin: 0 auto;
+            padding: 1.5rem 2rem;
+            text-align: center;
+        }
+        
+        .logo-section {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 20px;
+        }
+        
+        .logo-uas {
+            width: 80px;
+            height: 80px;
+            background: var(--uas-azul);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--uas-dorado);
+            font-size: 2rem;
+            font-weight: bold;
+            border: 4px solid var(--uas-dorado);
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+            flex-shrink: 0;
+        }
+        
+        .title-section h1 {
+            color: var(--uas-azul);
+            font-size: 2rem;
+            font-weight: 700;
+            margin-bottom: 0.3rem;
+        }
+        
+        .title-section p {
+            color: var(--uas-gris);
+            font-size: 0.85rem;
+            font-weight: 500;
+            line-height: 1.4;
+        }
+        
+        .main-container {
+            flex: 1;
+            max-width: var(--max-width);
+            width: 100%;
+            margin: 0 auto;
+            padding: 2rem;
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+        }
+        
+        .manifesto-box {
+            background: linear-gradient(135deg, rgba(0,63,127,0.95) 0%, rgba(74,144,226,0.95) 100%);
+            backdrop-filter: blur(15px);
+            border-left: 6px solid var(--uas-dorado);
+            padding: 1.5rem 2rem;
+            border-radius: 15px;
+            color: white;
+            box-shadow: 0 8px 30px rgba(0,0,0,0.3);
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .manifesto-box::before {
+            content: '"';
+            position: absolute;
+            top: -30px;
+            left: 10px;
+            font-size: 100px;
+            color: rgba(212,175,55,0.2);
+            font-family: Georgia, serif;
+        }
+        
+        .manifesto-box p {
+            font-size: 1.05rem;
+            line-height: 1.8;
+            font-style: italic;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.2);
+            position: relative;
+            z-index: 1;
+            margin: 0;
+        }
+        
+        .manifesto-box strong {
+            color: var(--uas-dorado);
+            font-weight: 700;
+        }
+        
+        .chat-container {
+            flex: 1;
+            background: rgba(255,255,255,0.98);
+            backdrop-filter: blur(15px);
+            border-radius: 20px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.15);
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            min-height: 500px;
+            max-height: calc(100vh - 400px);
+        }
+        
+        .messages-area {
+            flex: 1;
+            overflow-y: auto;
+            padding: 2rem;
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+            background: #f8f9fa;
+        }
+        
+        .messages-area::-webkit-scrollbar {
+            width: 8px;
+        }
+        
+        .messages-area::-webkit-scrollbar-track {
+            background: #f1f1f1;
+        }
+        
+        .messages-area::-webkit-scrollbar-thumb {
+            background: var(--uas-azul-claro);
+            border-radius: 4px;
+        }
+        
+        .messages-area::-webkit-scrollbar-thumb:hover {
+            background: var(--uas-azul);
+        }
+        
+        .message {
+            display: flex;
+            gap: 1rem;
+            animation: slideIn 0.3s ease;
+        }
+        
+        @keyframes slideIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .message.user {
+            justify-content: flex-end;
+        }
+        
+        .message.bot {
+            justify-content: flex-start;
+        }
+        
+        .message-bubble {
+            max-width: 85%;
+            padding: 1.2rem 1.5rem;
+            border-radius: 15px;
+            word-wrap: break-word;
+            line-height: 1.6;
+        }
+        
+        .message.user .message-bubble {
+            background: linear-gradient(45deg, var(--uas-azul), var(--uas-azul-claro));
+            color: white;
+            border-bottom-right-radius: 5px;
+            white-space: pre-wrap;
+        }
+        
+        .message.bot .message-bubble {
+            background: white;
+            color: #333;
+            border: 2px solid #e0e0e0;
+            border-bottom-left-radius: 5px;
+        }
+        
+        .message.bot .message-bubble strong {
+            color: var(--uas-azul);
+        }
+        
+        .message.bot .message-bubble h1 {
+            color: var(--uas-azul);
+            margin: 1.5rem 0 1rem 0;
+            font-size: 1.5rem;
+            border-bottom: 3px solid var(--uas-dorado);
+            padding-bottom: 0.5rem;
+        }
+        
+        .message.bot .message-bubble h2 {
+            color: var(--uas-azul);
+            margin: 1.5rem 0 1rem 0;
+            font-size: 1.3rem;
+            border-bottom: 2px solid var(--uas-dorado);
+            padding-bottom: 0.5rem;
+        }
+        
+        .message.bot .message-bubble h3 {
+            color: var(--uas-azul);
+            margin: 1rem 0 0.5rem 0;
+            font-size: 1.1rem;
+        }
+        
+        .message.bot .message-bubble h4 {
+            color: var(--uas-azul);
+            margin: 0.8rem 0 0.4rem 0;
+            font-size: 1rem;
+        }
+        
+        .message.bot .message-bubble ul, 
+        .message.bot .message-bubble ol {
+            margin: 1rem 0 1rem 1.5rem;
+        }
+        
+        .message.bot .message-bubble li {
+            margin: 0.5rem 0;
+        }
+        
+        .message.bot .message-bubble table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 1rem 0;
+            font-size: 0.9rem;
+        }
+        
+        .message.bot .message-bubble table th,
+        .message.bot .message-bubble table td {
+            border: 1px solid #ddd;
+            padding: 0.7rem;
+            text-align: left;
+        }
+        
+        .message.bot .message-bubble table th {
+            background: var(--uas-azul);
+            color: white;
+            font-weight: 600;
+        }
+        
+        .message.bot .message-bubble code {
+            background: #f4f4f4;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-family: 'Courier New', monospace;
+            font-size: 0.9em;
+        }
+        
+        .message.bot .message-bubble hr {
+            border: none;
+            border-top: 1px solid #e0e0e0;
+            margin: 1.5rem 0;
+        }
+        
+        .input-area {
+            padding: 1.5rem;
+            border-top: 2px solid #e0e0e0;
+            background: white;
+            display: flex;
+            gap: 1rem;
+        }
+        
+        .input-field {
+            flex: 1;
+            padding: 12px 20px;
+            border: 2px solid #e0e0e0;
+            border-radius: 15px;
+            font-size: 1rem;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            transition: all 0.3s ease;
+            resize: none;
+            min-height: 50px;
+            max-height: 200px;
+            overflow-y: auto;
+        }
+        
+        .input-field:focus {
+            outline: none;
+            border-color: var(--uas-azul);
+            box-shadow: 0 0 0 3px rgba(0,63,127,0.1);
+        }
+        
+        .input-field::-webkit-scrollbar {
+            width: 6px;
+        }
+        
+        .input-field::-webkit-scrollbar-thumb {
+            background: #ccc;
+            border-radius: 3px;
+        }
+        
+        .send-btn {
+            padding: 12px 28px;
+            background: linear-gradient(45deg, var(--uas-azul), var(--uas-azul-claro));
+            color: white;
+            border: none;
+            border-radius: 15px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            align-self: flex-end;
+        }
+        
+        .send-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(0,63,127,0.3);
+        }
+        
+        .send-btn:active {
+            transform: translateY(0);
+        }
+        
+        .send-btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+        
+        .loading-spinner {
+            display: inline-block;
+            width: 18px;
+            height: 18px;
+            border: 3px solid rgba(255,255,255,0.3);
+            border-radius: 50%;
+            border-top-color: white;
+            animation: spin 1s linear infinite;
+        }
+        
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        
+        .status-badge {
+            display: inline-block;
+            padding: 6px 12px;
+            border-radius: 15px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            margin-bottom: 0.8rem;
+        }
+        
+        .status-approved {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        
+        .status-rejected {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        
+        .status-reformulate {
+            background: #fff3cd;
+            color: #856404;
+            border: 1px solid #ffeaa7;
+        }
+        
+        .footer {
+            background: rgba(255,255,255,0.98);
+            backdrop-filter: blur(15px);
+            border-top: 4px solid var(--uas-dorado);
+            padding: 2rem;
+            text-align: center;
+            margin-top: auto;
+        }
+        
+        .footer-content {
+            max-width: var(--max-width);
+            margin: 0 auto;
+        }
+        
+        .footer-credit {
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: var(--uas-azul);
+            margin: 0.5rem 0;
+        }
+        
+        .footer-slogan {
+            font-size: 1rem;
+            color: var(--uas-dorado);
+            font-style: italic;
+            margin-top: 0.5rem;
+        }
+        
+        .footer-disclaimer {
+            margin-top: 1.5rem;
+            font-size: 0.85rem;
+            color: var(--uas-gris);
+            line-height: 1.6;
+        }
+        
+        @media (max-width: 768px) {
+            .header-container {
+                padding: 1rem;
+            }
+            
+            .logo-uas {
+                width: 60px;
+                height: 60px;
+                font-size: 1.5rem;
+            }
+            
+            .title-section h1 {
+                font-size: 1.5rem;
+            }
+            
+            .title-section p {
+                font-size: 0.75rem;
+            }
+            
+            .main-container {
+                padding: 1rem;
+            }
+            
+            .manifesto-box {
+                padding: 1rem 1.5rem;
+            }
+            
+            .manifesto-box p {
+                font-size: 0.95rem;
+            }
+            
+            .chat-container {
+                max-height: calc(100vh - 350px);
+            }
+            
+            .messages-area {
+                padding: 1rem;
+            }
+            
+            .message-bubble {
+                max-width: 92%;
+                padding: 1rem;
+            }
+            
+            .input-area {
+                padding: 1rem;
+                flex-direction: column;
+            }
+            
+            .send-btn {
+                width: 100%;
+                justify-content: center;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header class="header">
+        <div class="header-container">
+            <div class="logo-section">
+                <div class="logo-uas">⚕️</div>
+                <div class="title-section">
+                    <h1>Lisabella</h1>
+                    <p>Sistema de Inteligencia Médica Especializada | Motor validado con estándares Joint Commission, AHA/ESC y COFEPRIS</p>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <div class="main-container">
+        <div class="manifesto-box">
+            <p><strong>Cada diagnóstico es una vida.</strong> Cada duda, una oportunidad de salvar a alguien. Consulto con el rigor que merece quien confía en ti, porque en medicina no hay lugar para la mediocridad. <strong>Solo certeza, compasión y ciencia.</strong></p>
+        </div>
+
+        <div class="chat-container">
+            <div class="messages-area" id="messagesArea">
+                <div class="message bot">
+                    <div class="message-bubble">
+                        <strong>¡Hola! Soy Lisabella</strong><br>
+                        Tu asistente médico especializado en ciencias de la salud.<br><br>
+                        
+                        <strong>📚 PUEDO AYUDARTE A:</strong><br>
+                        • Estudiar y comprender conceptos médicos complejos<br>
+                        • Resolver dudas clínicas con evidencia verificable<br>
+                        • Analizar y comentar casos clínicos completos<br>
+                        • Revisar y corregir notas médicas hospitalarias<br>
+                        • Explicar farmacología (mecanismos, dosis, interacciones)<br>
+                        • Comparar diagnósticos diferenciales paso a paso<br><br>
+                        
+                        <strong>🔬 CIENCIAS BÁSICAS:</strong><br>
+                        <em>Anatomía • Histología • Embriología • Fisiología • Bioquímica • Farmacología • Toxicología • Microbiología • Parasitología • Genética • Inmunología • Patología • Epidemiología • Semiología</em><br><br>
+                        
+                        <strong>🏥 ESPECIALIDADES CLÍNICAS:</strong><br>
+                        <em>Medicina Interna • Cardiología • Neumología • Nefrología • Gastroenterología • Endocrinología • Hematología • Oncología • Infectología • Neurología • Neurociencias Cognitivas • Pediatría • Ginecología/Obstetricia • Dermatología • Psiquiatría • Medicina de Emergencia • Medicina Intensiva • Medicina Familiar • Geriatría • Medicina Paliativa</em><br><br>
+                        
+                        <strong>🔪 ESPECIALIDADES QUIRÚRGICAS:</strong><br>
+                        <em>Traumatología • Cirugía General • Cirugía Cardiovascular • Cirugía Plástica • Oftalmología • Otorrinolaringología • Urología • Anestesiología</em><br><br>
+                        
+                        <strong>📊 DIAGNÓSTICO:</strong><br>
+                        <em>Radiología • Medicina Nuclear • Genética Clínica</em><br><br>
+                        
+                        <strong>💡 COMANDOS ESPECIALES:</strong><br>
+                        • <code>revisar nota médica</code> - Auditoría según JCI/COFEPRIS<br>
+                        • <code>corregir nota médica</code> - Identificar errores de formato<br>
+                        • <code>elaborar nota médica</code> - Generar plantilla SOAP<br>
+                        • <code>valoracion de paciente</code> - Orientación diagnóstica<br>
+                        • <code>apoyo en estudio [tema]</code> - Modo educativo<br><br>
+                        
+                        <strong>¿En qué puedo ayudarte hoy?</strong>
+                    </div>
+                </div>
+            </div>
+
+            <div class="input-area">
+                <textarea 
+                    class="input-field" 
+                    id="questionInput" 
+                    placeholder="Escribe tu pregunta médica aquí... (Enter para enviar, Shift+Enter para salto de línea)"
+                    rows="1"
+                ></textarea>
+                <button class="send-btn" id="sendBtn" onclick="sendQuestion()">
+                    <span id="btnText">Enviar</span>
+                    <i class="fas fa-paper-plane"></i>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <footer class="footer">
+        <div class="footer-content">
+            <div class="footer-credit">Con amor para mi hija 💚</div>
+            <div class="footer-credit">JESÚS RAYMUNDO VEGA BONILLA</div>
+            <div class="footer-slogan">Lisabellacorp®</div>
+            <div class="footer-disclaimer">
+                <strong>Disclaimer:</strong> Lisabella es un motor de conocimiento médico especializado alimentado por librerías médicas validadas. Arquitectura de respuesta precisa basada en evidencia científica.
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        // CONFIGURACIÓN
+        const API_KEY = 'qIfrdsYSDdUKDgA7sTSdNybxnMxRhnsY';
+        const MISTRAL_MODEL = 'mistral-small-latest';
+
+        // DATOS: Dominios y términos prohibidos
+        const DOMAINS = {
+            keywords: {
+                "anatomía": ["arteria", "vena", "nervio", "órgano", "estructura", "ubicación", "región", "músculo", "hueso", "ligamento", "articulación", "fascia", "plexo", "topografía"],
+                "histología": ["tejido", "epitelio", "célula", "matriz", "tinción", "histológico", "biopsia", "microscopía", "citoarquitectura"],
+                "embriología": ["desarrollo", "embrión", "feto", "gestación", "organogénesis", "diferenciación", "morfogénesis", "teratógeno", "malformación"],
+                "fisiología": ["función", "proceso", "regulación", "homeostasis", "secreción", "contracción", "transporte", "filtración", "reabsorción"],
+                "bioquímica": ["enzima", "proteína", "metabolismo", "glucosa", "ácido", "síntesis", "catabolismo", "anabolismo", "glucólisis", "krebs", "atp"],
+                "farmacología": ["fármaco", "medicamento", "mecanismo", "dosis", "tratamiento", "farmacocinética", "farmacodinámica", "biodisponibilidad", "efectos adversos"],
+                "cardiología": ["corazón", "miocardio", "válvula", "arritmia", "insuficiencia cardíaca", "infarto", "angina", "electrocardiograma", "coronaria"],
+                "neumología": ["pulmón", "bronquio", "alvéolo", "respiración", "ventilación", "disnea", "neumonía", "asma", "epoc", "tuberculosis"],
+                "nefrología": ["riñón", "nefrona", "filtración glomerular", "orina", "creatinina", "insuficiencia renal", "diálisis", "nefropatía"],
+                "gastroenterología": ["estómago", "intestino", "hígado", "páncreas", "vesícula", "esófago", "colon", "digestión", "úlcera", "hepatitis", "cirrosis"],
+                "endocrinología": ["hormona", "glándula", "tiroides", "hipófisis", "diabetes", "insulina", "glucagón", "hipotiroidismo"],
+                "neurología": ["cerebro", "neurona", "sistema nervioso", "nervio craneal", "médula espinal", "accidente cerebrovascular", "convulsión", "meningitis"],
+                "hematología": ["sangre", "eritrocito", "leucocito", "plaqueta", "hemoglobina", "anemia", "leucemia", "coagulación", "transfusión"],
+                "oncología": ["cáncer", "tumor", "neoplasia", "metástasis", "carcinoma", "quimioterapia", "radioterapia"],
+                "infectología": ["infección", "vih", "tuberculosis", "hepatitis", "sepsis", "fiebre", "antimicrobiano"],
+                "inmunología": ["anticuerpo", "antígeno", "linfocito", "inmunidad", "vacuna", "autoinmune", "alergia", "hipersensibilidad"],
+                "patología": ["etiología", "fisiopatología", "diagnóstico", "enfermedad", "lesión", "neoplasia", "inflamación", "necrosis"],
+                "pediatría": ["niño", "lactante", "neonato", "crecimiento", "desarrollo", "vacunación", "pediátrico"],
+                "ginecología": ["útero", "ovario", "menstruación", "ciclo menstrual", "endometrio", "cervix", "vulva"],
+                "obstetricia": ["embarazo", "gestación", "parto", "placenta", "feto", "prenatal", "puerperio"],
+                "dermatología": ["piel", "dermatitis", "eczema", "psoriasis", "lesión cutánea", "melanoma", "acné"],
+                "psiquiatría": ["depresión", "esquizofrenia", "bipolar", "psicosis", "antidepresivo", "trastorno"]
+            },
+            special_commands: {
+                "revision_nota": ["revisar nota", "revision de nota", "revisa nota médica"],
+                "correccion_nota": ["corregir nota", "correccion de nota", "corrige nota médica"],
+                "elaboracion_nota": ["elaborar nota", "elaboracion de nota", "hacer nota", "crear nota"],
+                "valoracion": ["valoracion", "valoración", "valorar paciente"],
+                "apoyo_estudio": ["apoyo en estudio", "ayuda en estudio", "ayudame a estudiar"]
+            }
+        };
+
+        const PROHIBITED_TERMS = [
+            "sentir", "opinar", "creer", "inversor", "dinero",
+            "carro", "receta", "chef", "psicología", "emocional",
+            "triste", "feliz", "ansiedad", "depresión", "miedo",
+            "amor", "odio", "estrés", "motivación", "consejo"
+        ];
+
+        // REFERENCIAS AL DOM
+        const messagesArea = document.getElementById('messagesArea');
+        const questionInput = document.getElementById('questionInput');
+        const sendBtn = document.getElementById('sendBtn');
+        const btnText = document.getElementById('btnText');
+
+        // EVENT LISTENERS
+        questionInput.addEventListener('input', function() {
+            this.style.height = 'auto';
+            this.style.height = Math.min(this.scrollHeight, 200) + 'px';
+        });
+
+        questionInput.addEventListener('keydown', function(e) {
+            if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                e.stopPropagation();
+                sendQuestion();
+            }
+        });
+
+        sendBtn.addEventListener('click', function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            sendQuestion();
+        });
+
+        // FUNCIONES DE CLASIFICACIÓN
+        function detectSpecialCommand(question) {
+            const q = question.toLowerCase();
+            for (const [cmd, triggers] of Object.entries(DOMAINS.special_commands)) {
+                if (triggers.some(trigger => q.includes(trigger))) {
+                    return cmd;
+                }
+            }
+            return null;
+        }
+
+        function getDomainScores(question) {
+            const q = question.toLowerCase();
+            const scores = {};
+            
+            for (const [domain, keywords] of Object.entries(DOMAINS.keywords)) {
+                const matches = keywords.filter(kw => q.includes(kw)).length;
+                if (matches > 0) {
+                    scores[domain] = matches;
+                }
+            }
+            return scores;
+        }
+
+        function isMedicalNote(text) {
+            const indicators = [
+                /\bfecha[:\s]/,
+                /\bmotivo de consulta[:\s]/,
+                /\bexploración física[:\s]/,
+                /\bimpresión diagnóstica[:\s]/,
+                /\bplan[:\s]/,
+                /\b\d+\s*mg\b/,
+                /\bfc[:\s]\s*\d+/,
+                /\bta[:\s]\s*\d+\/\d+/
+            ];
+            const matches = indicators.filter(ind => ind.test(text.toLowerCase())).length;
+            return matches >= 3;
+        }
+
+        function classifyQuestion(question) {
+            if (!question || question.trim().length < 3) {
+                return {
+                    result: "RECHAZADA",
+                    reason: "Pregunta vacía o demasiado corta",
+                    suggestion: ""
+                };
+            }
+
+            const q = question.toLowerCase();
+
+            // NIVEL 1: Detectar comando especial
+            const specialCommand = detectSpecialCommand(question);
+            if (specialCommand) {
+                return {
+                    result: "APROBADA",
+                    domain: "análisis clínico",
+                    confidence: 0.95,
+                    special_command: specialCommand
+                };
+            }
+
+            // NIVEL 2: Rechazar términos prohibidos
+            const prohibitedFound = PROHIBITED_TERMS.filter(term => q.includes(term));
+            if (prohibitedFound.length > 0) {
+                return {
+                    result: "RECHAZADA",
+                    reason: `Contiene términos no médicos: ${prohibitedFound.join(', ')}`,
+                    suggestion: "Lisabella solo responde preguntas de ciencias médicas"
+                };
+            }
+
+            // NIVEL 3: Detectar nota médica completa
+            if (isMedicalNote(question)) {
+                return {
+                    result: "APROBADA",
+                    domain: "análisis clínico",
+                    confidence: 0.95,
+                    note_analysis: true
+                };
+            }
+
+            // NIVEL 4: Buscar keywords por dominio
+            const domainScores = getDomainScores(question);
+            const totalKeywords = Object.values(domainScores).reduce((a, b) => a + b, 0);
+
+            if (totalKeywords >= 3) {
+                const bestDomain = Object.keys(domainScores).reduce((a, b) => 
+                    domainScores[a] > domainScores[b] ? a : b
+                );
+                return {
+                    result: "APROBADA",
+                    domain: bestDomain,
+                    confidence: Math.min(0.92, 0.70 + (totalKeywords * 0.06))
+                };
+            }
+
+            if (totalKeywords >= 2) {
+                const bestDomain = Object.keys(domainScores).reduce((a, b) => 
+                    domainScores[a] > domainScores[b] ? a : b
+                );
+                return {
+                    result: "APROBADA",
+                    domain: bestDomain,
+                    confidence: 0.75
+                };
+            }
+
+            return {
+                result: "REFORMULAR",
+                reason: "No se detectaron términos médicos específicos",
+                suggestion: "Agrega términos médicos: nombres de órganos, fármacos, enfermedades o procesos bioquímicos"
+            };
+        }
+
+        function buildSystemPrompt(domain, specialCommand) {
+            if (specialCommand === "revision_nota") {
+                return `Eres un auditor médico certificado especializado en revisión de notas médicas según estándares JCI, Clínica Mayo y COFEPRIS. Evalúa: datos del paciente, motivo de consulta, padecimiento actual, antecedentes, exploración física, impresión diagnóstica, plan de manejo, y aspectos legales. Proporciona un análisis detallado de componentes presentes, faltantes, errores detectados, cumplimiento legal y recomendaciones.`;
+            }
+
+            if (specialCommand === "correccion_nota") {
+                return `Eres un corrector especializado de notas médicas. Tu función es identificar y corregir errores de formato, ortografía médica, dosis, abreviaturas no estándar, y claridad. Señala errores específicos con ubicación exacta y proporciona versión corregida.`;
+            }
+
+            if (specialCommand === "elaboracion_nota") {
+                return `Eres un generador de plantillas de notas médicas. Crea plantillas estructuradas en formato SOAP completo con todos los campos obligatorios: datos del documento, datos del paciente, subjetivo, objetivo, análisis y plan detallado.`;
+            }
+
+            if (specialCommand === "valoracion") {
+                return `Eres un médico consultor especializado en apoyo diagnóstico. Analiza el caso clínico y proporciona: resumen del caso, hipótesis diagnósticas (probable y diferenciales con justificación), estudios sugeridos, abordaje terapéutico, signos de alarma, y criterios de derivación.`;
+            }
+
+            if (specialCommand === "study_mode") {
+                return `Eres Lisabella en modo educativo especializado en ${domain}. Enseña usando: analogías para conceptos complejos, ejemplos clínicos relevantes, explicación del "por qué" detrás de cada concepto, división en pasos simples, casos de aplicación práctica, errores comunes, correlación clínica. Objetivo: que el usuario ENTIENDA profundamente, no solo memorice.`;
+            }
+
+            return `Eres Lisabella, asistente médico especializado en ${domain}. Proporciona respuestas basadas en rigor científico verificable. Estructura: Definición, Detalles Clave, Advertencias, Fuentes. Solo información de fuentes académicas confiables como Gray's Anatomy, Harrison's Principles, UpToDate, COFEPRIS. No inventes fármacos ni estructuras.`;
+        }
+
+        async function generateResponse(question, classification) {
+            const domain = classification.domain || "medicina general";
+            const specialCommand = classification.special_command;
+
+            const systemPrompt = buildSystemPrompt(domain, specialCommand);
+            
+            let userPrompt = question;
+            if (!specialCommand) {
+                userPrompt = `PREGUNTA MÉDICA (${domain}):\n${question}\n\nResponde siguiendo: Definición, Detalles Clave, Advertencias, Fuentes`;
+            }
+
+            try {
+                const response = await fetch('https://api.mistral.ai/v1/chat/completions', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${API_KEY}`
+                    },
+                    body: JSON.stringify({
+                        model: MISTRAL_MODEL,
+                        messages: [
+                            { role: "system", content: systemPrompt },
+                            { role: "user", content: userPrompt }
+                        ],
+                        temperature: 0.7,
+                        max_tokens: 4000
+                    })
+                });
+
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    throw new Error(errorData.message || `API error: ${response.status}`);
+                }
+
+                const data = await response.json();
+                return data.choices[0].message.content;
+            } catch (error) {
+                console.error('Error:', error);
+                if (error.message.includes('401') || error.message.includes('Unauthorized')) {
+                    return "❌ **Error de Autenticación**\n\nVerifica que la API key de Mistral sea válida y esté activada.";
+                }
+                if (error.message.includes('429') || error.message.includes('rate')) {
+                    return "⏳ **Sistema Temporalmente Saturado**\n\nIntenta nuevamente en unos segundos.";
+                }
+                return `⚠️ **Error**: ${error.message}`;
+            }
+        }
+
+        async function sendQuestion() {
+            const question = questionInput.value.trim();
+            if (!question) return;
+
+            addMessage('user', question);
+            questionInput.value = '';
+            questionInput.style.height = 'auto';
+            sendBtn.disabled = true;
+            btnText.innerHTML = '<span class="loading-spinner"></span>';
+
+            // Clasificar pregunta
+            const classification = classifyQuestion(question);
+
+            // Manejar respuesta rechazada
+            if (classification.result === "RECHAZADA") {
+                addMessage('bot', `
+                    <span class="status-badge status-rejected">❌ Pregunta Rechazada</span><br>
+                    <strong>Razón:</strong> ${classification.reason}<br><br>
+                    ${classification.suggestion ? `<em
