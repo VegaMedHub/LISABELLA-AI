@@ -843,4 +843,131 @@
                 addMessage('bot', `
                     <span class="status-badge status-rejected">❌ Pregunta Rechazada</span><br>
                     <strong>Razón:</strong> ${classification.reason}<br><br>
-                    ${classification.suggestion ? `<em
+                   ${classification.suggestion ? `<em>${classification.suggestion}</em>` : ''}
+                `);
+                sendBtn.disabled = false;
+                btnText.textContent = 'Enviar';
+                questionInput.focus();
+                return;
+            }
+
+            // Manejar reforma requerida
+            if (classification.result === "REFORMULAR") {
+                addMessage('bot', `
+                    <span class="status-badge status-reformulate">💡 Reformulación Sugerida</span><br>
+                    <strong>Razón:</strong> ${classification.reason}<br><br>
+                    ${classification.suggestion ? `<em>${classification.suggestion}</em>` : ''}
+                `);
+                sendBtn.disabled = false;
+                btnText.textContent = 'Enviar';
+                questionInput.focus();
+                return;
+            }
+
+            // Generar respuesta con Mistral
+            const response = await generateResponse(question, classification);
+            
+            const responseHtml = formatMarkdown(response);
+            
+            let statusBadge = 'status-approved';
+            if (response.includes('Error') || response.includes('❌')) {
+                statusBadge = 'status-rejected';
+            }
+            
+            addMessage('bot', `
+                <span class="status-badge ${statusBadge}">✅ Respuesta Procesada</span>
+                ${classification.domain ? `<span style="font-size: 0.85rem; color: var(--uas-gris);">[${classification.domain}]</span>` : ''}<br><br>
+                ${responseHtml}
+            `);
+
+            sendBtn.disabled = false;
+            btnText.textContent = 'Enviar';
+            questionInput.focus();
+        }
+
+        function formatMarkdown(text) {
+            if (!text) return '';
+            
+            let lines = text.split('\n');
+            let result = '';
+            let inList = false;
+            let listType = '';
+            
+            for (let line of lines) {
+                // Headers
+                if (line.match(/^#### /)) {
+                    if (inList) { result += `</${listType}>`; inList = false; }
+                    result += '<h4>' + line.replace(/^#### /, '') + '</h4>';
+                } else if (line.match(/^### /)) {
+                    if (inList) { result += `</${listType}>`; inList = false; }
+                    result += '<h3>' + line.replace(/^### /, '') + '</h3>';
+                } else if (line.match(/^## /)) {
+                    if (inList) { result += `</${listType}>`; inList = false; }
+                    result += '<h2>' + line.replace(/^## /, '') + '</h2>';
+                } else if (line.match(/^# /)) {
+                    if (inList) { result += `</${listType}>`; inList = false; }
+                    result += '<h1>' + line.replace(/^# /, '') + '</h1>';
+                }
+                // Listas no ordenadas
+                else if (line.match(/^[\-\•] /)) {
+                    if (!inList || listType !== 'ul') {
+                        if (inList) result += `</${listType}>`;
+                        result += '<ul>';
+                        inList = true;
+                        listType = 'ul';
+                    }
+                    result += '<li>' + line.replace(/^[\-\•] /, '') + '</li>';
+                }
+                // Listas ordenadas
+                else if (line.match(/^\d+\. /)) {
+                    if (!inList || listType !== 'ol') {
+                        if (inList) result += `</${listType}>`;
+                        result += '<ol>';
+                        inList = true;
+                        listType = 'ol';
+                    }
+                    result += '<li>' + line.replace(/^\d+\. /, '') + '</li>';
+                }
+                // Líneas separadoras
+                else if (line.match(/^---+$/)) {
+                    if (inList) { result += `</${listType}>`; inList = false; }
+                    result += '<hr>';
+                }
+                // Líneas normales
+                else if (line.trim()) {
+                    if (inList) { result += `</${listType}>`; inList = false; }
+                    result += line + '<br>';
+                } else {
+                    if (inList) { result += `</${listType}>`; inList = false; }
+                    result += '<br>';
+                }
+            }
+            
+            if (inList) result += `</${listType}>`;
+            
+            // Formato inline
+            result = result
+                .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+                .replace(/\*(.*?)\*/g, '<em>$1</em>')
+                .replace(/`(.*?)`/g, '<code>$1</code>');
+            
+            return result;
+        }
+
+        function addMessage(sender, content) {
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `message ${sender}`;
+            
+            const bubble = document.createElement('div');
+            bubble.className = 'message-bubble';
+            bubble.innerHTML = content;
+            
+            messageDiv.appendChild(bubble);
+            messagesArea.appendChild(messageDiv);
+            messagesArea.scrollTop = messagesArea.scrollHeight;
+        }
+
+        questionInput.focus();
+    </script>
+</body>
+</html>
