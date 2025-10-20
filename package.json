@@ -1,0 +1,137 @@
+/**
+ * CONFIGURACIÓN GLOBAL DE LISABELLA
+ * Variables de entorno y constantes del sistema
+ */
+
+import dotenv from 'dotenv';
+dotenv.config();
+
+// ═══════════════════════════════════════════════════════
+// API CONFIGURATION
+// ═══════════════════════════════════════════════════════
+
+export const MISTRAL_KEY = process.env.MISTRAL_API_KEY || 'qIfrdsYSDdUKDgA7sTSdNybxnMxRhnsY';
+export const MISTRAL_MODEL = process.env.MISTRAL_MODEL || 'mistral-small-latest';
+export const MISTRAL_TEMP = parseFloat(process.env.MISTRAL_TEMP || '0.7');
+
+// ═══════════════════════════════════════════════════════
+// SERVER CONFIGURATION
+// ═══════════════════════════════════════════════════════
+
+export const PORT = process.env.PORT || 5000;
+export const HOST = process.env.HOST || 'localhost';
+export const NODE_ENV = process.env.NODE_ENV || 'development';
+
+// ═══════════════════════════════════════════════════════
+// CORS CONFIGURATION
+// ═══════════════════════════════════════════════════════
+
+export const CORS_ORIGIN = process.env.CORS_ORIGIN || 'http://localhost:3000';
+export const CORS_METHODS = ['GET', 'POST', 'OPTIONS'];
+export const CORS_HEADERS = ['Content-Type', 'Authorization'];
+
+// ═══════════════════════════════════════════════════════
+// MEDICAL DOMAINS
+// ═══════════════════════════════════════════════════════
+
+export const MEDICAL_DOMAINS = {
+  "anatomía": ["arteria", "vena", "nervio", "órgano", "estructura", "ubicación", "región", "músculo", "hueso", "ligamento", "articulación", "fascia", "plexo", "topografía"],
+  "histología": ["tejido", "epitelio", "célula", "matriz", "tinción", "histológico", "biopsia", "microscopía", "citoarquitectura"],
+  "embriología": ["desarrollo", "embrión", "feto", "gestación", "organogénesis", "diferenciación", "morfogénesis", "teratógeno", "malformación"],
+  "fisiología": ["función", "proceso", "regulación", "homeostasis", "secreción", "contracción", "transporte", "filtración", "reabsorción"],
+  "bioquímica": ["enzima", "proteína", "metabolismo", "glucosa", "ácido", "síntesis", "catabolismo", "anabolismo", "glucólisis", "krebs", "atp"],
+  "farmacología": ["fármaco", "medicamento", "mecanismo", "dosis", "tratamiento", "farmacocinética", "farmacodinámica", "biodisponibilidad", "efectos adversos"],
+  "cardiología": ["corazón", "miocardio", "válvula", "arritmia", "insuficiencia cardíaca", "infarto", "angina", "electrocardiograma", "coronaria"],
+  "neumología": ["pulmón", "bronquio", "alvéolo", "respiración", "ventilación", "disnea", "neumonía", "asma", "epoc", "tuberculosis"],
+  "nefrología": ["riñón", "nefrona", "filtración glomerular", "orina", "creatinina", "insuficiencia renal", "diálisis", "nefropatía"],
+  "gastroenterología": ["estómago", "intestino", "hígado", "páncreas", "vesícula", "esófago", "colon", "digestión", "úlcera", "hepatitis", "cirrosis"],
+  "endocrinología": ["hormona", "glándula", "tiroides", "hipófisis", "diabetes", "insulina", "glucagón", "hipotiroidismo"],
+  "neurología": ["cerebro", "neurona", "sistema nervioso", "nervio craneal", "médula espinal", "accidente cerebrovascular", "convulsión", "meningitis"],
+  "hematología": ["sangre", "eritrocito", "leucocito", "plaqueta", "hemoglobina", "anemia", "leucemia", "coagulación", "transfusión"],
+  "oncología": ["cáncer", "tumor", "neoplasia", "metástasis", "carcinoma", "quimioterapia", "radioterapia"],
+  "infectología": ["infección", "vih", "tuberculosis", "hepatitis", "sepsis", "fiebre", "antimicrobiano"],
+  "inmunología": ["anticuerpo", "antígeno", "linfocito", "inmunidad", "vacuna", "autoinmune", "alergia", "hipersensibilidad"],
+  "patología": ["etiología", "fisiopatología", "diagnóstico", "enfermedad", "lesión", "neoplasia", "inflamación", "necrosis"],
+  "pediatría": ["niño", "lactante", "neonato", "crecimiento", "desarrollo", "vacunación", "pediátrico"],
+  "ginecología": ["útero", "ovario", "menstruación", "ciclo menstrual", "endometrio", "cervix", "vulva"],
+  "obstetricia": ["embarazo", "gestación", "parto", "placenta", "feto", "prenatal", "puerperio"],
+  "dermatología": ["piel", "dermatitis", "eczema", "psoriasis", "lesión cutánea", "melanoma", "acné"],
+  "psiquiatría": ["depresión", "esquizofrenia", "bipolar", "psicosis", "antidepresivo", "trastorno"]
+};
+
+// ═══════════════════════════════════════════════════════
+// SPECIAL COMMANDS
+// ═══════════════════════════════════════════════════════
+
+export const SPECIAL_COMMANDS = {
+  "revision_nota": ["revisar nota", "revision de nota", "revisa nota médica"],
+  "correccion_nota": ["corregir nota", "correccion de nota", "corrige nota médica"],
+  "elaboracion_nota": ["elaborar nota", "elaboracion de nota", "hacer nota", "crear nota"],
+  "valoracion": ["valoracion", "valoración", "valorar paciente"],
+  "apoyo_estudio": ["apoyo en estudio", "ayuda en estudio", "ayudame a estudiar"]
+};
+
+// ═══════════════════════════════════════════════════════
+// PROHIBITED TERMS
+// ═══════════════════════════════════════════════════════
+
+export const PROHIBITED_TERMS = [
+  "sentir", "opinar", "creer", "inversor", "dinero",
+  "carro", "receta", "chef", "psicología", "emocional",
+  "triste", "feliz", "ansiedad", "depresión", "miedo",
+  "amor", "odio", "estrés", "motivación", "consejo"
+];
+
+// ═══════════════════════════════════════════════════════
+// RESULT ENUM
+// ═══════════════════════════════════════════════════════
+
+export const Result = {
+  APPROVED: "APROBADA",
+  REJECTED: "RECHAZADA",
+  REFORMULATE: "REFORMULAR"
+};
+
+// ═══════════════════════════════════════════════════════
+// LOGGING CONFIGURATION
+// ═══════════════════════════════════════════════════════
+
+export const LOG_LEVEL = process.env.LOG_LEVEL || 'info';
+
+export const logLevels = {
+  debug: 0,
+  info: 1,
+  warn: 2,
+  error: 3
+};
+
+export function log(level, message, data = null) {
+  const timestamp = new Date().toISOString();
+  const levelName = level.toUpperCase();
+  
+  if (logLevels[level] >= logLevels[LOG_LEVEL]) {
+    if (data) {
+      console.log(`[${timestamp}] ${levelName}: ${message}`, data);
+    } else {
+      console.log(`[${timestamp}] ${levelName}: ${message}`);
+    }
+  }
+}
+
+// ═══════════════════════════════════════════════════════
+// VALIDATION HELPERS
+// ═══════════════════════════════════════════════════════
+
+export function validateQuestion(question) {
+  if (!question) return false;
+  if (typeof question !== 'string') return false;
+  if (question.trim().length < 3) return false;
+  return true;
+}
+
+export function validateApiKey(key) {
+  if (!key) return false;
+  if (typeof key !== 'string') return false;
+  if (key.length < 10) return false;
+  return true;
+}
